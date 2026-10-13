@@ -1,0 +1,55 @@
+services:
+  backend:
+    image: dalat-travelmate:local
+    build: .
+    # Không có command: backend dùng CMD chạy Uvicorn trong Dockerfile.
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?Thêm DEEPSEEK_API_KEY vào .env}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:?Thêm DEEPSEEK_BASE_URL vào .env}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:?Thêm DEEPSEEK_MODEL vào .env}
+      SERPAPI_API_KEY: ${SERPAPI_API_KEY:?Thêm SERPAPI_API_KEY vào .env}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      # Chỉ kiểm tra HTTP server; không chạy Agent hay gọi API bên ngoài.
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import urllib.request
+          urllib.request.urlopen(
+              "http://127.0.0.1:8000/openapi.json",
+              timeout=3,
+          )
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+  frontend:
+    image: dalat-travelmate:local
+    # Dùng image backend đã build trên máy; không tải từ registry.
+    pull_policy: never
+    # Thay CMD mặc định bằng Streamlit.
+    command:
+      - python
+      - -m
+      - streamlit
+      - run
+      - ui/app.py
+      - --server.address
+      - 0.0.0.0
+      - --server.port
+      - "8501"
+      - --server.headless
+      - "true"
+      - --browser.gatherUsageStats
+      - "false"
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-8501}:8501"
+    depends_on:
+      backend:
+        condition: service_healthy
