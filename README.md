@@ -184,7 +184,6 @@ requirements.txt
 Dockerfile
 .dockerignore
 compose.yaml
-AGENTS.md
 README.md
 ```
 
@@ -417,4 +416,4 @@ Các dependency hiện được giới hạn theo khoảng phiên bản trong `r
 - UI có thời gian chờ đọc response 300 giây; timeout ở frontend không tự hủy workflow backend.
 - Chưa có xác thực hoặc giới hạn tần suất cho triển khai public. Hiện hướng dẫn chạy local.
 
-**Bước tiếp theo:** kiểm tra chất lượng đề xuất bằng các mô tả thực tế và ghi lại các trường hợp chưa phù hợp. Nguyên tắc phát triển từng bước nằm trong [AGENTS.md](AGENTS.md).
+**Bước tiếp theo:** kiểm tra chất lượng đề xuất bằng các mô tả thực tế và ghi lại các trường hợp chưa phù hợp.
