@@ -4,7 +4,7 @@
 
 | File | Vai trò |
 |---|---|
-| [cases.json](cases.json) | 10 câu E01–E10 đã chốt và kỳ vọng theo ý nghĩa |
+| [cases.json](cases.json) | 10 câu E01–E10 và kỳ vọng theo ý nghĩa |
 | [run.py](run.py) | Chạy graph một lần mỗi câu và lưu dữ liệu để chấm |
 | `runs/<run-id>/manifest.json` | Cấu hình, phiên bản code, thời gian và trạng thái thực thi |
 | `runs/<run-id>/E01.json` … | Nhu cầu, query, ứng viên, evidence, assessment, output và lỗi |
@@ -21,9 +21,9 @@ Hiện đã có một lần chạy thử riêng E02 và một lần chạy đủ
 
 So description với các nhóm và tiêu chí thực tế: giữ ý chính, đúng nhóm, đúng mong muốn/điều cần tránh. Không yêu cầu tên nhóm, thứ tự hoặc câu chữ giống nguyên văn kỳ vọng. Loại địa điểm có thể nằm trong tên nhóm/query/tiêu chí. Câu chỉ hỏi ăn vặt không được tự thêm giá rẻ, ngon hoặc yên tĩnh.
 
-Theo tiêu chuẩn đã thống nhất, cả 10 câu của lần chạy đầy đủ được người dùng chốt Đạt về hiểu nhu cầu. Lặp biểu diễn hoặc nguy cơ mất quan hệ thời gian được ghi chú kỹ thuật riêng, không tự đổi nhãn cả câu thành hiểu sai.
+Qua kiểm tra thủ công, cả 10 câu trong lần chạy đầy đủ được đánh giá Đạt về hiểu nhu cầu theo tiêu chuẩn của bộ mẫu. Lặp biểu diễn hoặc nguy cơ mất quan hệ thời gian được ghi chú kỹ thuật riêng, không tự đổi nhãn cả câu thành hiểu sai.
 
-Lần chạy ngày 18/10/2026 (3 ứng viên/nhóm, Top 2) có kết quả bám nguồn đã được người dùng chốt: **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên 72 đánh giá tiêu chí của 36 lượt địa điểm. Đây là đánh giá thủ công có trợ lý hỗ trợ, không phải accuracy toàn hệ thống. Bản chấm chi tiết nằm local trong `runs/`.
+Lần chạy ngày 18/10/2026 (3 ứng viên/nhóm, Top 2) có kết quả kiểm tra thủ công về bám nguồn: **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên 72 đánh giá tiêu chí của 36 lượt địa điểm. Đây là đánh giá thủ công có trợ lý hỗ trợ, không phải accuracy toàn hệ thống. Bản chấm chi tiết nằm local trong `runs/`.
 
 ### Bám nguồn — chấm từng địa điểm, từng tiêu chí
 
@@ -34,11 +34,11 @@ Lần chạy ngày 18/10/2026 (3 ứng viên/nhóm, Top 2) có kết quả bám 
 - `mixed`: có cả hai loại; nguồn không nhắc tới không phải phản bác.
 - `unknown`: chưa đủ thông tin; có thể là cách xử lý đúng.
 
-Với `avoid`, supported nghĩa là có dấu hiệu điều cần tránh xảy ra. Nhãn loại hình khác không tự phủ định một đặc điểm: quán cà phê vẫn có thể bán ăn vặt. Giữ điều kiện/ngữ cảnh của nguồn và chấp nhận cách diễn đạt tương đương phù hợp ngữ cảnh đã được duyệt.
+Với `avoid`, supported nghĩa là có dấu hiệu điều cần tránh xảy ra. Nhãn loại hình khác không tự phủ định một đặc điểm: quán cà phê vẫn có thể bán ăn vặt. Giữ điều kiện/ngữ cảnh của nguồn và chấp nhận cách diễn đạt tương đương phù hợp ngữ cảnh theo tiêu chuẩn của bộ mẫu.
 
 **Nhãn người chấm:** Đạt / Chưa đạt / Chưa xác định; ô trống nghĩa là chưa chấm. Ghi căn cứ bằng mã câu, nhóm, địa điểm/place_id, tiêu chí và ID nguồn. ID review chỉ có nghĩa trong đúng địa điểm. Chấm cả ứng viên assessed không được chọn Top-K; không dùng rating hoặc điểm ranking làm nhãn chất lượng.
 
-Người chấm Chưa xác định khác Agent trả unknown. Ví dụ không có nguồn về trà, Agent trả unknown có thể được chấm Đạt; điều đó không chứng minh quán không có trà. Những suy luận mơ hồ phải thống nhất trước khi chốt nhãn, không tự sửa kỳ vọng để ép khớp kết quả.
+Người chấm Chưa xác định khác Agent trả unknown. Ví dụ không có nguồn về trà, Agent trả unknown có thể được chấm Đạt; điều đó không chứng minh quán không có trà. Những suy luận mơ hồ phải thống nhất trước khi gán nhãn, không tự sửa kỳ vọng để ép khớp kết quả.
 
 **Ngoài benchmark:** lý do cuối, giữ điều kiện/unknown trên UI và ảnh/link chỉ lưu để tham khảo, không có bảng điểm output. Test logic Python là phần kiểm tra kỹ thuật riêng, không phải nhãn chất lượng LLM.
 
@@ -46,7 +46,7 @@ Người chấm Chưa xác định khác Agent trả unknown. Ví dụ không c�
 
 Chỉ gửi `description` và `location` cho Agent. `id` nhận diện case; `expected_groups` và `notes` dành cho người chấm, không được gửi vào prompt. Không có tên quán cố định làm đáp án. Hai giới hạn chạy là cấu hình, không nằm trong kỳ vọng.
 
-Bộ nhỏ này phục vụ phát hiện lỗi và so phiên bản trên các tình huống đã chốt; không gọi kết quả là accuracy toàn hệ thống. Review mẫu không đại diện toàn bộ trải nghiệm; có nguồn không có nghĩa đã xác minh ngoài đời.
+Bộ nhỏ này phục vụ phát hiện lỗi và so phiên bản trên các tình huống trong bộ mẫu; không gọi kết quả là accuracy toàn hệ thống. Review mẫu không đại diện toàn bộ trải nghiệm; có nguồn không có nghĩa đã xác minh ngoài đời.
 
 ## 3. Cách chạy
 

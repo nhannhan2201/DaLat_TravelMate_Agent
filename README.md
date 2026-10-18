@@ -426,11 +426,11 @@ Mỗi lần chạy lưu thư mục riêng trong `evaluation/runs/` gồm manifes
 
 Đánh giá trên một lần chạy ngày **18/10/2026**, model `chib/deepseek-v4.1-flash`, tối đa **3 ứng viên mỗi nhóm**, chọn **Top 2 mỗi nhóm**. Người dùng và trợ lý đọc kết quả đã lưu, đối chiếu theo hai tiêu chí trên; không gọi một mô hình khác để tự chấm.
 
-**Hiểu nhu cầu:** người dùng đã chốt cả 10 câu Đạt về giữ ý chính, đúng nhóm và phân biệt wants/avoids. Chấp nhận cách diễn đạt tương đương; lưu ý về lặp tiêu chí hoặc liên hệ thời gian được ghi riêng.
+**Hiểu nhu cầu:** cả 10 câu giữ được ý chính, đúng nhóm và phân biệt wants/avoids theo tiêu chuẩn đánh giá của bộ mẫu. Chấp nhận cách diễn đạt tương đương; lưu ý về lặp tiêu chí hoặc liên hệ thời gian được ghi riêng.
 
-**Bám nguồn:** cột dưới ghi số đánh giá tiêu chí Đạt / Chưa đạt trong từng câu, không phải số quán. Đây là kết quả đánh giá thủ công có trợ lý hỗ trợ, **đã được người dùng xác nhận và chốt** trên lần chạy này: 67 Đạt, 5 Chưa đạt, không còn mục Chưa xác định. Không phải đánh giá độc lập của nhiều người chấm.
+**Bám nguồn:** cột dưới ghi số đánh giá tiêu chí Đạt / Chưa đạt trong từng câu, không phải số quán. Kết quả được kiểm tra thủ công trên dữ liệu đã lưu, có trợ lý hỗ trợ đối chiếu nguồn; không phải đánh giá độc lập của nhiều người chấm.
 
-| Mã | Câu người dùng nhập | Hiểu nhu cầu — đã duyệt | Bám nguồn — Đạt / Chưa đạt (đã chốt) |
+| Mã | Câu người dùng nhập | Hiểu nhu cầu | Bám nguồn — Đạt / Chưa đạt |
 |---|---|---|---:|
 | E01 | Tôi muốn tìm chỗ ăn vặt. | Đạt | 1 / 2 |
 | E02 | Tôi muốn tìm tiệm bánh ngọt có chỗ ngồi lại và phục vụ trà. | Đạt | 6 / 0 |
@@ -447,10 +447,10 @@ Mỗi lần chạy lưu thư mục riêng trong `evaluation/runs/` gồm manifes
 
 Các mục bám nguồn đang ghi nhận Chưa đạt:
 
-- **E01 — 2 mục:** dùng nhãn loại hình Quán cà phê/Nhà hàng làm bằng chứng phản bác ăn vặt, dù các đặc điểm có thể cùng đúng. Người dùng đã xác nhận Chưa đạt.
-- **E07 — 1 mục:** trả `unknown` cho có chỗ ngồi, trong khi ngữ cảnh ăn trưa tại nhà hàng được người dùng chấp nhận là đủ suy ra chỗ ngồi. Người dùng đã chốt.
-- **E08 — 1 mục:** review nói quán vắng chiều mưa bị đưa vào nguồn phản bác yên tĩnh. Người dùng đã xác nhận Chưa đạt.
-- **E10 — 1 mục:** nguồn không nói về cảnh đồi núi bị dùng làm bằng chứng phản bác tiêu chí đó. Người dùng đã xác nhận Chưa đạt.
+- **E01 — 2 mục:** dùng nhãn loại hình Quán cà phê/Nhà hàng làm bằng chứng phản bác ăn vặt, dù các đặc điểm có thể cùng đúng.
+- **E07 — 1 mục:** trả `unknown` cho có chỗ ngồi, trong khi ngữ cảnh ăn trưa tại nhà hàng được xem là đủ suy ra có chỗ ngồi theo cách chấm của bộ mẫu.
+- **E08 — 1 mục:** review nói quán vắng chiều mưa bị đưa vào nguồn phản bác yên tĩnh.
+- **E10 — 1 mục:** nguồn không nói về cảnh đồi núi bị dùng làm bằng chứng phản bác tiêu chí đó.
 
 `unknown` không tự là lỗi: nếu nguồn thiếu thông tin và Agent không khẳng định quá mức, đánh giá đó vẫn có thể Đạt. Nhãn bám nguồn còn xét explanation và các ID viện dẫn, không chỉ status. Tổng 72 mục là tiêu chí Agent thực tế tạo (có thể lặp/khác cách tách), không phải 72 nhãn chuẩn cố định.
 
