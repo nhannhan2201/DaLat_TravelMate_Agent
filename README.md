@@ -4,7 +4,7 @@
 
 AI Agent đề xuất địa điểm ăn uống, cà phê và tham quan tại Đà Lạt từ mô tả sở thích bằng tiếng Việt. Ứng dụng tìm địa điểm thực tế qua SerpApi Google Maps, đối chiếu thông tin/review với nhu cầu bằng DeepSeek và trả đề xuất theo từng nhóm.
 
-**Trạng thái:** đã có workflow Python, FastAPI và Streamlit chạy local. Đã có cấu hình Docker Compose để chạy hai service.
+**Trạng thái:** đã có workflow Python, FastAPI và Streamlit chạy local. Đã có Docker Compose, bộ 10 yêu cầu mẫu và runner lưu dữ liệu để đánh giá thủ công.
 
 ## Bắt đầu nhanh — Docker
 
@@ -174,6 +174,13 @@ app/
   main.py            FastAPI: POST /recommendations
 ui/
   app.py             Streamlit gọi backend qua HTTP
+evaluation/
+  cases.json         10 câu hỏi và kỳ vọng theo ý nghĩa
+  run.py             Chạy graph và lưu dữ liệu để chấm thủ công
+  README.md          Hướng dẫn đánh giá
+  runs/              Kết quả local, Git bỏ qua
+tests/
+  test_evaluation_runner.py  Test runner offline bằng unittest
 .streamlit/
   config.toml        Theme giao diện
 docs/
@@ -187,7 +194,7 @@ compose.yaml
 README.md
 ```
 
-`samples/` chưa được tạo. `samples/` dự kiến chứa dữ liệu kiểm tra đã loại thông tin nhạy cảm, không thay thế nguồn dữ liệu SerpApi khi ứng dụng chạy.
+Bộ câu hỏi kiểm tra nằm trong `evaluation/cases.json`; dữ liệu chạy thật vẫn lấy qua SerpApi. Kết quả local trong `evaluation/runs/` không được commit. Không có thư mục `samples/` ở phiên bản hiện tại.
 
 ## Cài đặt
 
@@ -365,19 +372,63 @@ Lỗi riêng từng ứng viên được ghi nhận và không dừng các ứng
 
 ## Kiểm tra kết quả
 
-Dự án đã kiểm tra thủ công với dữ liệu mẫu và API thật: tách nhu cầu, Search tại Đà Lạt, Details/Reviews, assessment thiếu hoặc mâu thuẫn bằng chứng, ranking, validation API và giao diện kết quả. Chưa có bộ dữ liệu kiểm tra lưu sẵn trong repo.
+### Test runner offline
 
-Khi thay đổi component, kiểm tra theo các trường hợp:
+Từ thư mục gốc repo, trong môi trường Python đã cài dependencies:
 
-- Một nhu cầu và nhiều nhu cầu: nhóm/query có giữ đúng ý người dùng không?
-- Bằng chứng thiếu, trái ngược hoặc có điều kiện thời gian: kết luận có bám nguồn không?
-- Ranking: cộng/trừ điểm, hòa điểm, thiếu rating, toàn `unknown`, điểm âm và lỗi ứng viên.
-- Output: ảnh, địa chỉ, link Maps có thuộc đúng quán không? Lý do có biến dữ liệu thiếu thành khẳng định không?
-- UI/API: mô tả rỗng, thành phố khác, giới hạn không hợp lệ, mất kết nối và nhóm không có kết quả.
+```bash
+python -m unittest discover -s tests -v
+```
 
-Đã build image và chạy hai service bằng Compose ở cổng 8001/8502. Kiểm tra health, kết nối frontend → backend, không có `.env` trong image và frontend không nhận API key đều thành công. Một POST thật với 1 ứng viên / Top 1 trả HTTP 200, có địa điểm, ảnh URL và Maps link.
+Hiện có **13 test cho runner**, dùng `unittest` có sẵn trong Python, không thêm framework. Test dùng graph giả và một graph LangGraph thực với dịch vụ đã mock; kết nối socket bị chặn. Các trường hợp gồm:
 
-Có thể bắt đầu bằng giới hạn nhỏ để kiểm tra nguồn, rồi tăng số ứng viên khi đã hiểu chi phí và thời gian chờ.
+- Đọc đúng case; không gửi kỳ vọng/ghi chú vào Agent.
+- Một lần stream mỗi case, không gọi lại graph để xuất báo cáo.
+- Nối đúng nguồn và output ngay cả khi tên quán/nhóm trùng nhau.
+- Lưu riêng từng lần chạy; giữ dữ liệu trước lỗi, tiếp tục câu sau; xử lý Ctrl+C.
+- Ghi kết quả rỗng, lỗi ứng viên, chưa đánh giá và che secret.
+- Giữ hợp đồng response của workflow phục vụ FastAPI.
+
+Đây là test **runner và tính toàn vẹn dữ liệu**, không chứng minh chất lượng LLM. Bộ unit test ranking/assessment validation riêng chưa được bổ sung.
+
+### Bộ đánh giá thủ công 10 câu
+
+Bộ [E01–E10](evaluation/cases.json) gồm ăn vặt, tiệm bánh, bánh căn, quán nướng, ngắm cảnh, vườn hoa, âm nhạc và cà phê; có một hoặc nhiều nhóm nhu cầu. Tên nhóm/tiêu chí được chấm theo ý nghĩa, không ép nguyên văn hoặc một quán làm đáp án.
+
+Chỉ chấm **hai phần**:
+
+| Phần | Đơn vị chấm | Cách đánh giá |
+|---|---|---|
+| Hiểu nhu cầu | Từng câu | Giữ ý chính, đúng nhóm, phân biệt wants/avoids |
+| Bám nguồn | Từng tiêu chí của từng địa điểm | Status, ID nguồn và explanation có hợp lý với Details/Reviews đã cung cấp không |
+
+Nhãn: Đạt / Chưa đạt / Chưa xác định. `unknown` có thể là kết quả đúng khi thiếu bằng chứng. Không dùng Google Rating hay điểm ranking làm nhãn chất lượng; không chấm câu lý do trên UI vào benchmark.
+
+Chạy một câu trước:
+
+```bash
+python -m evaluation.run --case E02 \
+  --max-candidates-per-group 3 --top-k 2
+```
+
+Chạy cả bộ:
+
+```bash
+python -m evaluation.run --all \
+  --max-candidates-per-group 3 --top-k 2
+```
+
+**Các lệnh evaluation gọi API thật và có thể tính phí/hạn mức.** Runner gọi graph trực tiếp, không cần FastAPI/Streamlit hoặc container đang chạy. Hai giới hạn áp dụng mỗi nhóm và bắt buộc là số nguyên dương; 3/2 chỉ là cấu hình ví dụ.
+
+Mỗi lần chạy lưu thư mục riêng trong `evaluation/runs/` gồm manifest, JSON từng câu và `report.md`. Báo cáo giữ nhu cầu, query, ứng viên, evidence, assessment và output để đối chiếu; không tự chấm, không gọi thêm API để dựng báo cáo. Nhận xét người chấm có thể viết riêng trong `manual_review.md`. Xem [hướng dẫn đánh giá](evaluation/README.md).
+
+### Trạng thái đánh giá hiện tại
+
+Đã chạy một bộ 10 câu với cấu hình 3 ứng viên/nhóm, Top 2, tạo 13 nhóm và 36 lượt địa điểm có assessment (72 đánh giá tiêu chí); một lượt ứng viên E07 lỗi assessment. Người dùng đã chốt 10 câu giữ được nhu cầu chính theo tiêu chuẩn của bộ này. Phần bám nguồn đã được rà soát có trợ lý hỗ trợ nhưng chưa duyệt toàn bộ, nên chưa công bố tỷ lệ chất lượng đã xác nhận.
+
+Các kết quả nguồn và nhận xét nằm local, không đi kèm repo công khai. Chưa có baseline, người chấm độc lập hay kết quả đủ để suy ra accuracy toàn hệ thống. Hạn chế quan sát được gồm gán nhầm bằng chứng phản bác và suy luận quá bảo thủ; cần tiếp tục kiểm tra, không coi luồng chạy thành công là đề xuất đã tốt.
+
+Ngoài bộ đánh giá, FastAPI/Streamlit và Docker Compose đã được chạy thử thủ công. Ảnh, link Maps và chất lượng đề xuất thực tế vẫn cần kiểm tra theo từng trường hợp.
 
 ## Xử lý lỗi thường gặp
 

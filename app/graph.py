@@ -212,15 +212,24 @@ def run_recommendation_workflow(
 ) -> RecommendationResponse:
     """Chạy toàn bộ agent và trả Top-K theo từng nhóm, không lộ điểm nội bộ."""
 
+    initial = prepare_recommendation_state(request, max_candidates_per_group, top_k)
+    state = build_recommendation_graph().invoke(initial)
+    return state["response"]
+
+
+def prepare_recommendation_state(
+    request: RecommendationRequest, max_candidates_per_group: int, top_k: int
+) -> AssessmentState:
+    """Kiểm tra input/cấu hình dùng chung; không gọi API và không trả API key."""
+
     if type(top_k) is not int or top_k <= 0:
         raise ValueError("top_k phải là số nguyên dương.")
     _validate_assessment_request(request, max_candidates_per_group)
-    state = build_recommendation_graph().invoke({
+    return {
         "description": request.description, "location": "Đà Lạt",
         "max_candidates_per_group": max_candidates_per_group,
         "top_k": top_k,
-    })
-    return state["response"]
+    }
 
 
 def run_search_workflow(request: RecommendationRequest) -> SearchState:

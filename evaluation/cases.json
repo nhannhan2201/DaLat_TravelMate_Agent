@@ -1,0 +1,95 @@
+[
+  {
+    "id": "E01",
+    "description": "Tôi muốn tìm chỗ ăn vặt.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Ăn vặt", "wants": [], "avoids": []}
+    ],
+    "notes": "Chỉ có loại địa điểm; không tự thêm món, ngân sách hay sở thích. Không bắt buộc lặp loại địa điểm thành một tiêu chí riêng."
+  },
+  {
+    "id": "E02",
+    "description": "Tôi muốn tìm tiệm bánh ngọt có chỗ ngồi lại và phục vụ trà.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Tiệm bánh ngọt", "wants": ["Có chỗ ngồi tại tiệm", "Có phục vụ trà"], "avoids": []}
+    ],
+    "notes": "Hai tiêu chí thuộc cùng một nhu cầu tìm tiệm bánh; không tách trà thành nhóm riêng."
+  },
+  {
+    "id": "E03",
+    "description": "Tôi muốn ăn bánh căn vào buổi sáng, tránh chỗ ngồi sát đường nhiều khói xe.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Ăn bánh căn", "wants": ["Phục vụ bánh căn vào buổi sáng"], "avoids": ["Chỗ ngồi sát đường nhiều khói xe"]}
+    ],
+    "notes": "Giữ món bánh căn và thời điểm buổi sáng. Có thể thể hiện món trong loại địa điểm hoặc tiêu chí; không làm mất ý. Điều cần tránh có cả ngữ cảnh sát đường và khói xe."
+  },
+  {
+    "id": "E04",
+    "description": "Tôi muốn tìm quán nướng có chỗ ngồi ngoài trời và nhìn ra đồi núi.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Quán nướng", "wants": ["Có chỗ ngồi ngoài trời", "Nhìn ra đồi núi"], "avoids": []}
+    ],
+    "notes": "Ngoài trời và nhìn ra đồi núi là hai ý cần đối chiếu; bằng chứng cho ý này không tự chứng minh ý còn lại."
+  },
+  {
+    "id": "E05",
+    "description": "Tôi muốn tìm nơi ngắm hoàng hôn, không phải đi bộ lên dốc nhiều.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Ngắm hoàng hôn", "wants": ["Có thể ngắm hoàng hôn"], "avoids": ["Phải đi bộ lên dốc nhiều"]}
+    ],
+    "notes": "Không tự đổi nhu cầu thành săn mây hoặc ngắm bình minh. View đẹp chưa chứng minh ngắm được hoàng hôn; vị trí trên đồi chưa chứng minh phải đi bộ lên dốc nhiều."
+  },
+  {
+    "id": "E06",
+    "description": "Tôi muốn tham quan vườn hoa có lối đi dễ di chuyển cho người lớn tuổi.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Tham quan vườn hoa", "wants": ["Lối đi dễ di chuyển cho người lớn tuổi"], "avoids": []}
+    ],
+    "notes": "Giữ loại địa điểm vườn hoa và nhu cầu di chuyển của người lớn tuổi. Không tự thêm yêu cầu xe lăn; ảnh đẹp hoặc có vườn hoa chưa chứng minh lối đi thuận tiện."
+  },
+  {
+    "id": "E07",
+    "description": "Tôi muốn tìm nơi nghe nhạc acoustic vào buổi tối, có chỗ ngồi.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Nghe nhạc acoustic", "wants": ["Có nhạc acoustic vào buổi tối", "Có chỗ ngồi"], "avoids": []}
+    ],
+    "notes": "Giữ loại nhạc, thời điểm buổi tối và chỗ ngồi. Quán mở buổi tối chưa chứng minh có chương trình acoustic buổi tối; lịch biểu diễn có thể thay đổi."
+  },
+  {
+    "id": "E08",
+    "description": "Tôi muốn quán cà phê có nhiều cây xanh, yên tĩnh để đọc sách.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Cà phê", "wants": ["Có nhiều cây xanh", "Yên tĩnh", "Phù hợp đọc sách"], "avoids": []}
+    ],
+    "notes": "Các tiêu chí cùng một nhóm cà phê. Không mặc định yên tĩnh đồng nghĩa phù hợp đọc sách; giữ điều kiện thời gian/ngữ cảnh nếu bằng chứng có giới hạn."
+  },
+  {
+    "id": "E09",
+    "description": "Tôi muốn tìm chỗ ăn vặt giá hợp lý và tiệm bánh có chỗ ngồi ngoài trời.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Ăn vặt", "wants": ["Giá hợp lý"], "avoids": []},
+      {"name": "Tiệm bánh", "wants": ["Có chỗ ngồi ngoài trời"], "avoids": []}
+    ],
+    "notes": "Hai nhóm nhu cầu; giá hợp lý thuộc ăn vặt, ngoài trời thuộc tiệm bánh. Không tự đặt ngưỡng tiền khi người dùng chưa nêu."
+  },
+  {
+    "id": "E10",
+    "description": "Tôi muốn quán ăn có món chay, quán cà phê ven hồ và một nơi ngắm cảnh đồi núi.",
+    "location": "Đà Lạt",
+    "expected_groups": [
+      {"name": "Ăn uống", "wants": ["Có món chay"], "avoids": []},
+      {"name": "Cà phê", "wants": ["Ven hồ"], "avoids": []},
+      {"name": "Ngắm cảnh", "wants": ["Ngắm cảnh đồi núi"], "avoids": []}
+    ],
+    "notes": "Ba nhóm, gắn đúng tiêu chí từng nhóm. Có món chay không có nghĩa là chỉ phục vụ đồ chay; không ép loại địa điểm cụ thể cho nơi ngắm cảnh."
+  }
+]

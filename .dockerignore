@@ -9,3 +9,5 @@ __pycache__/
 docs/
 samples/
 README.md
+evaluation/
+tests/
