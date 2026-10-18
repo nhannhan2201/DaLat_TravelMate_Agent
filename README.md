@@ -2,104 +2,205 @@
 
 **Tìm một nơi hợp với bạn.**
 
-AI Agent đề xuất địa điểm **ăn uống, cà phê và tham quan tại Đà Lạt** từ sở thích viết bằng tiếng Việt. Agent tìm địa điểm thực tế, phân tích thông tin/review và trả đề xuất theo từng nhóm nhu cầu.
+AI Agent đề xuất địa điểm ăn uống, cà phê và tham quan tại Đà Lạt từ mô tả sở thích bằng tiếng Việt. Ứng dụng tìm địa điểm thực tế qua SerpApi Google Maps, đối chiếu thông tin/review với nhu cầu bằng DeepSeek và trả đề xuất theo từng nhóm.
 
-Mỗi địa điểm có ảnh khi có dữ liệu, tên, Google Rating, số đánh giá, địa chỉ, lý do đề xuất và link Google Maps. Đã có workflow Python, FastAPI, Streamlit và Docker Compose chạy local.
+**Trạng thái:** đã có workflow Python, FastAPI và Streamlit chạy local. Đã có Docker Compose, bộ 10 yêu cầu mẫu và runner lưu dữ liệu để đánh giá thủ công.
 
-## Demo
+## Bắt đầu nhanh — Docker
 
-<details>
-<summary>Tìm quán bánh ngọt có cảnh đẹp</summary>
+Cần **Docker có Compose**, Docker daemon hoạt động, Internet và tài khoản API có hạn mức. Không cần cài Python hoặc Conda trên máy khi dùng cách này.
 
-![Nhập nhu cầu tìm quán bánh ngọt](docs/images/bakery-request.png)
+1. Lấy repository về bằng Git hoặc tải ZIP, rồi mở terminal tại thư mục gốc.
+2. Tạo cấu hình riêng nếu chưa có:
 
-![Kết quả đề xuất quán bánh ngọt](docs/images/bakery-results.png)
+   ```bash
+   cp -n .env.example .env
+   ```
 
-</details>
+3. Điền `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL` và `SERPAPI_API_KEY` trong `.env`. Xem [cấu hình](#cài-đặt) bên dưới.
+4. Build và khởi động:
 
-<details>
-<summary>Tìm cà phê mát mẻ, phù hợp đọc sách</summary>
+   ```bash
+   docker compose up --build
+   ```
 
-![Nhập nhu cầu tìm cà phê đọc sách](docs/images/cafe-request.png)
+5. Mở [giao diện](http://127.0.0.1:8501), nhập sở thích và nhấn **Tìm nơi dành cho bạn**.
 
-![Kết quả đề xuất cà phê](docs/images/cafe-results.png)
+Dừng bằng Ctrl+C; chạy `docker compose down` để dọn container và mạng dự án. Không cần chạy `docker build` riêng hoặc có image trên Docker Hub: Compose build image từ source trong repo.
 
-</details>
+## Nội dung
 
-Ảnh chụp các lần chạy thực tế; kết quả và rating có thể thay đổi. Thông tin thiếu không được xem là đã xác minh.
+- [Demo giao diện](#demo-giao-diện)
+- [Phạm vi MVP](#phạm-vi-mvp)
+- [Công nghệ](#công-nghệ-và-vai-trò)
+- [Kiến trúc, bằng chứng và ranking](#kiến-trúc-và-workflow)
+- [Cấu trúc repository](#cấu-trúc-repository)
+- [Cài đặt và cấu hình](#cài-đặt)
+- [Chạy bằng Python](#chạy-ứng-dụng)
+- [Chạy bằng Docker Compose](#chạy-bằng-docker-compose)
+- [API](#api)
+- [Kiểm tra](#kiểm-tra-kết-quả)
+- [Xử lý lỗi thường gặp](#xử-lý-lỗi-thường-gặp)
+- [Giới hạn](#giới-hạn-và-bước-tiếp-theo)
 
-## Công nghệ và cách hoạt động
+## Demo giao diện
 
-**Python · LangGraph · LangChain · DeepSeek API · SerpApi Google Maps · FastAPI · Streamlit · Docker Compose**
+Giao diện lấy cảm hứng từ đồi núi và rừng thông Đà Lạt, với tông xanh và nền kem. Mỗi thẻ hiển thị ảnh thực tế khi có, tên, Google Rating, số đánh giá, địa chỉ, lý do đề xuất và nút Google Maps.
+
+### Tìm quán bánh ngọt có cảnh đẹp
+
+**Mô tả:** “Tôi muốn một quán ăn bánh ngọt có cảnh đẹp.”
+
+![Nhập nhu cầu tìm quán bánh ngọt và cấu hình kết quả](docs/images/bakery-request.png)
+
+![Đề xuất quán bánh ngọt theo nhóm nhu cầu](docs/images/bakery-results.png)
+
+### Tìm cà phê mát mẻ, phù hợp đọc sách
+
+**Mô tả:** “Tôi muốn một cafe mát mẻ phù hợp đọc sách.”
+
+![Nhập nhu cầu tìm cà phê để đọc sách](docs/images/cafe-request.png)
+
+![Kết quả cà phê và các đặc điểm chưa được xác minh đầy đủ](docs/images/cafe-results.png)
+
+Các ảnh trên là ảnh chụp lần chạy thực tế do người dùng cung cấp. Tên quán, rating, số đánh giá và thứ tự đề xuất có thể thay đổi ở lần chạy khác; ảnh demo không chứng minh mọi tiêu chí đều được đáp ứng.
+
+## Phạm vi MVP
+
+- Nhận một hoặc nhiều nhu cầu trong cùng mô tả; các tiêu chí của cùng mục đích nằm trong một nhóm.
+- Tìm ứng viên, lấy thông tin và một trang review, đánh giá từng tiêu chí rồi chọn Top-K **riêng cho mỗi nhóm**.
+- Xử lý dữ liệu thiếu, bằng chứng trái ngược và lỗi riêng từng ứng viên.
+- Giữ điểm và ID bằng chứng nội bộ; trả lời ngắn gọn cho người dùng.
+
+MVP chỉ hỗ trợ **Đà Lạt**, nhưng giữ `location` trong dữ liệu để mở rộng sau. Không làm lịch trình theo ngày, khách sạn, đặt phòng hay tối ưu đường đi.
+
+## Công nghệ và vai trò
+
+| Component | Vai trò |
+|---|---|
+| Python + Pydantic | Kiểu dữ liệu, validation, chuẩn hóa và ranking |
+| LangGraph | Truyền state và điều phối các node của Agent |
+| LangChain + DeepSeek API | Tách nhu cầu, soạn query và đối chiếu tiêu chí với bằng chứng |
+| SerpApi Google Maps | Search, Place Details và Reviews |
+| FastAPI + Uvicorn | Nhận HTTP request và trả JSON đề xuất |
+| Streamlit | Form nhập sở thích và thẻ kết quả theo nhóm |
+| Docker Compose | Build image Python và chạy backend/frontend cùng nhau |
+
+MVP không triển khai dịch vụ LangSmith, pytest, GitHub Actions, Kubernetes, Helm hoặc MCP. Việc kiểm tra hiện thực hiện bằng dữ liệu mẫu và chạy thử thủ công.
+
+## Kiến trúc và workflow
 
 ```mermaid
-flowchart LR
-    A[Nhập sở thích] --> B[Tách nhu cầu]
-    B --> C[Tìm địa điểm]
-    C --> D[Lấy thông tin và review]
-    D --> E[Đánh giá từng tiêu chí]
-    E --> F[Ranking và đề xuất theo nhóm]
+flowchart TD
+    UI[Streamlit: nhập sở thích] -->|POST /recommendations| API[FastAPI: kiểm tra request]
+    API --> Extract[DeepSeek: tách nhóm nhu cầu]
+    Extract --> Search[SerpApi: tìm ứng viên từng nhóm]
+    Search --> Normalize[Python: chuẩn hóa ứng viên]
+    Normalize --> Evidence[SerpApi + Python: lấy và chuẩn bị bằng chứng]
+    Evidence --> Assess[DeepSeek + Python: đánh giá và kiểm tra kết quả]
+    Assess --> Rank[Python: ranking và tạo response]
+    Rank -->|JSON theo nhóm| UI
 ```
 
-- **LangGraph** điều phối workflow; **DeepSeek qua LangChain** tách nhu cầu và đối chiếu tiêu chí với bằng chứng.
-- **SerpApi** cung cấp Search, Details và Reviews. **Python** chuẩn hóa, kiểm tra kết quả, ranking và tạo lý do bằng mẫu câu.
-- **Streamlit** gửi yêu cầu tới **FastAPI**, nhận kết quả để hiển thị. **Docker Compose** chạy hai thành phần cùng nhau.
+Sơ đồ thể hiện luồng ứng dụng; các bước từ tách nhu cầu đến output chạy trong LangGraph. Nhánh tìm lại bằng query rộng được xử lý **bên trong node Search**, chưa phải conditional edge riêng của graph.
 
-Ranking cộng 1 cho bằng chứng thuận, trừ 1 cho bất lợi; mixed/unknown cho 0. Hòa điểm xét Google Rating rồi giữ thứ tự Search. Chọn Top-K riêng mỗi nhóm trong tập ứng viên đã đánh giá; không coi rating là bằng chứng đáp ứng sở thích.
+| Bước | Input → Output |
+|---|---|
+| Extract Needs | `description` → các `NeedGroup` gồm tên nhóm, `wants`, `avoids`, query cụ thể và query rộng |
+| Search | Query mỗi nhóm + `location` → phản hồi Maps và query thực sự đã dùng |
+| Normalize | `local_results` → `CandidateGroup`, gồm nhu cầu và danh sách `PlaceCandidate` |
+| Evidence | Ứng viên được chọn → `PlaceEvidence`, giữ dữ liệu nguồn với ID riêng |
+| Assess | Nhu cầu + bằng chứng → `PlaceAssessment`, một đánh giá cho mỗi tiêu chí |
+| Ranking / Output | Các `AssessmentGroup` + Top-K → `RecommendationResponse` |
 
-## Chạy ứng dụng
+Search thêm tên thành phố và tâm bản đồ Đà Lạt vào request. Nếu query cụ thể không có ứng viên, node thử query rộng khi hai query khác nhau. Việc xuất hiện trong Search chưa chứng minh địa điểm đáp ứng sở thích.
 
-### 1. Lấy code và tạo cấu hình
+### Bằng chứng và đánh giá
 
-Cách dưới đây dùng terminal Bash. Máy cần Docker, Docker Compose và Internet; không cần cài Python/Conda nếu chạy bằng Docker.
+`build_place_evidence()` chọn các trường Details có mặt: `type`, `description`, `extensions`, `hours`. Review có chữ trong `snippet` được giữ cùng ngày và link khi có; bỏ review không có nội dung và ID review trùng. Metadata API không được đưa vào prompt.
 
-```bash
-git clone https://github.com/nhannhan2201/DaLat_TravelMate_Agent.git
-cd DaLat_TravelMate_Agent
-cp -n .env.example .env
+DeepSeek đánh giá từng tiêu chí với bốn trạng thái:
+
+| Trạng thái | Ý nghĩa đối với chính tiêu chí |
+|---|---|
+| `supported` | Có bằng chứng hỗ trợ |
+| `contradicted` | Có bằng chứng trái ngược |
+| `mixed` | Có cả bằng chứng hỗ trợ và trái ngược |
+| `unknown` | Chưa đủ thông tin |
+
+Với `avoid` như “nhạc lớn”, `supported` nghĩa là có dấu hiệu điều cần tránh xảy ra. Python kiểm tra tiêu chí không bị thêm/bỏ/lặp, ID nguồn tồn tại và trạng thái khớp các danh sách bằng chứng. Đây là kiểm tra cấu trúc, chưa bảo đảm LLM hiểu đúng nội dung. Bằng chứng rỗng trả `unknown` mà không gọi mô hình.
+
+### Personalized ranking
+
+Ranking xét **tất cả ứng viên `assessed` có đánh giá**, kể cả toàn `unknown` hoặc điểm âm. Ứng viên lỗi hoặc chưa được đánh giá không tham gia.
+
+| Đánh giá | Điểm |
+|---|---:|
+| `want supported` hoặc `avoid contradicted` | +1 |
+| `want contradicted` hoặc `avoid supported` | −1 |
+| `mixed` hoặc `unknown` | 0 |
+
+Cộng điểm các tiêu chí, sắp điểm giảm dần, rồi Google Rating giảm dần. Khi hòa điểm, rating thiếu xếp sau rating có dữ liệu; hòa hoàn toàn giữ thứ tự Search.
+
+Ví dụ cùng nhu cầu “yên tĩnh, phù hợp đọc sách, tránh nhạc lớn”: quán A hỗ trợ hai mong muốn và chưa rõ nhạc lớn có điểm **2**; quán B hỗ trợ đọc sách nhưng có dấu hiệu nhạc lớn có điểm **0**. Quán A đứng trước dù rating quán B cao hơn.
+
+Các tiêu chí có trọng số ngang nhau theo quy tắc MVP đã chọn. Điểm không phải xác suất phù hợp, độ tin cậy hay metric đã được chứng minh; một điểm thuận có thể bù một điểm bất lợi. `unknown` và `mixed` đều cho 0 điểm nhưng có ý nghĩa khác nhau.
+
+Lý do cuối được tạo bằng **mẫu câu Python**, không gọi thêm DeepSeek: nêu điểm đáng cân nhắc, hạn chế và điều chưa xác minh. Giải thích chi tiết/ID nguồn giữ trong assessment nội bộ. Quán toàn `unknown` vẫn có thể được chọn, nhưng lý do phải nói chưa đủ dữ liệu xác minh sở thích.
+
+### Giới hạn phân tích và chi phí API
+
+- `max_candidates_per_group`: số ứng viên tối đa được thử lấy bằng chứng và đánh giá trong mỗi nhóm.
+- `top_k`: số đề xuất tối đa trả về trong mỗi nhóm sau ranking.
+- Nếu Search trả ít hơn giới hạn, chỉ xử lý số hiện có. Nếu số đánh giá thành công ít hơn Top-K, trả số hiện có.
+- Chọn các ứng viên có `place_id` hợp lệ theo thứ tự Search, bỏ ID trùng trong nhóm. Đây là bước giới hạn chi phí trước ranking, chưa phải chọn quán tốt nhất.
+- Ứng viên lỗi vẫn tính vào giới hạn; không tự lấy ứng viên kế tiếp thay thế.
+
+Mỗi nhóm có một lượt Search, thêm một lượt khi cần tìm lại bằng query rộng. Mỗi địa điểm được chọn cần tối đa một lượt Details, một lượt Reviews và một lượt assessment LLM, ngoài lượt LLM tách nhu cầu. Dữ liệu Details/Reviews lấy thành công được dùng lại nếu một quán xuất hiện trong nhiều nhóm của **cùng lần chạy**; assessment vẫn riêng theo nhu cầu. Không cache giữa các lần chạy.
+
+Ảnh dùng URL `thumbnail` hoặc `serpapi_thumbnail` từ Search. Maps link được dựng từ tên/địa chỉ và `place_id`. Không tải ảnh về, không gọi Photos API và không gọi LLM ở node output. Workflow chạy tuần tự; SDK mô hình có thể retry theo mặc định thư viện.
+
+## Cấu trúc repository
+
+```text
+app/
+  config.py          Đọc cấu hình; báo lỗi khi thiếu biến bắt buộc
+  schemas.py         Request, nhu cầu, ứng viên, bằng chứng, assessment, response
+  serpapi_client.py  Maps Search, Details và trang Reviews đầu tiên
+  places.py          Chuẩn hóa ứng viên và chuẩn bị bằng chứng
+  llm.py             Tách nhu cầu và đánh giá qua DeepSeek
+  ranking.py         Tính điểm, chọn Top-K và tạo output
+  graph.py           Các workflow Search, Assessment và Recommendation
+  main.py            FastAPI: POST /recommendations
+ui/
+  app.py             Streamlit gọi backend qua HTTP
+evaluation/
+  cases.json         10 câu hỏi và kỳ vọng theo ý nghĩa
+  run.py             Chạy graph và lưu dữ liệu để chấm thủ công
+  README.md          Hướng dẫn đánh giá
+  runs/              Kết quả local, Git bỏ qua
+tests/
+  test_evaluation_runner.py  Test runner offline bằng unittest
+.streamlit/
+  config.toml        Theme giao diện
+docs/
+  images/            Bốn ảnh chụp demo dùng trong README
+.env.example
+.gitignore
+requirements.txt
+Dockerfile
+.dockerignore
+compose.yaml
+README.md
 ```
 
-Nếu đã có repo, vào thư mục dự án và giữ `.env` hiện có. Điền **bốn biến bắt buộc** trong `.env` bằng thông tin tài khoản của bạn:
+Bộ câu hỏi kiểm tra nằm trong `evaluation/cases.json`; dữ liệu chạy thật vẫn lấy qua SerpApi. Kết quả local trong `evaluation/runs/` không được commit. Không có thư mục `samples/` ở phiên bản hiện tại.
 
-```dotenv
-DEEPSEEK_API_KEY=<key nhà cung cấp mô hình>
-DEEPSEEK_BASE_URL=https://api.vilao.ai/v1
-DEEPSEEK_MODEL=chib/deepseek-v4.1-flash
-SERPAPI_API_KEY=<key SerpApi>
-```
+## Cài đặt
 
-Endpoint/model trên là cấu hình Vilao đã chạy thử trong dự án; key, endpoint và model phải tương ứng với dịch vụ bạn dùng. Các biến còn lại trong `.env.example` có thể để trống để dùng mặc định. Không commit `.env`; các lần tìm kiếm sử dụng hạn mức/phí API của bạn.
+Phần cài Python dưới đây dành cho phát triển/chạy thủ công. Nếu dùng Docker, chỉ cần chuẩn bị `.env`, không cần tạo môi trường Conda.
 
-### 2. Khởi động
-
-Đảm bảo Docker đang chạy, rồi thực hiện:
-
-```bash
-docker compose up --build
-```
-
-Mở **[http://127.0.0.1:8501](http://127.0.0.1:8501)**, nhập sở thích và nhấn **Tìm nơi dành cho bạn**. Không cần mở hai terminal chạy FastAPI/Streamlit riêng.
-
-Image đã có và code chưa thay đổi thì lần sau chỉ cần `docker compose up`. Nếu cổng mặc định bị chiếm, dùng:
-
-```bash
-BACKEND_PORT=8001 FRONTEND_PORT=8502 docker compose up --build
-```
-
-Khi đó giao diện ở `http://127.0.0.1:8502`. UI mặc định xem xét tối đa 10 ứng viên và hiển thị Top 2 **mỗi nhóm**; có thể đổi trong “Tùy chọn kết quả”.
-
-### 3. Dừng
-
-Nhấn **Ctrl+C**, sau đó:
-
-```bash
-docker compose down
-```
-
-<details>
-<summary>Chạy bằng Python khi phát triển, không dùng Docker</summary>
-
-Đã chạy thử với Python 3.12. Chuẩn bị `.env` như trên, rồi cài môi trường tại thư mục gốc repo:
+Dự án đã chạy thử với **Python 3.12**. Từ thư mục gốc repository, tạo môi trường riêng nếu chưa có:
 
 ```bash
 conda create -n dalat-travelmate python=3.12
@@ -107,35 +208,229 @@ conda activate dalat-travelmate
 python -m pip install -r requirements.txt
 ```
 
-Nếu môi trường đã có thì chỉ cần activate và cài dependencies. Giữ cả hai terminal sau chạy:
+Nếu đã có môi trường `dalat-travelmate`, chỉ cần activate và cài dependencies. Tạo `.env` nếu chưa có:
 
-**Terminal 1 — backend:**
+```bash
+cp -n .env.example .env
+```
+
+Điền các biến sau bằng cấu hình của tài khoản bạn:
+
+```dotenv
+DEEPSEEK_API_KEY=<key nhà cung cấp mô hình>
+DEEPSEEK_BASE_URL=https://api.vilao.ai/v1
+DEEPSEEK_MODEL=chib/deepseek-v4.1-flash
+SERPAPI_API_KEY=<key SerpApi>
+BACKEND_URL=http://127.0.0.1:8000
+```
+
+Endpoint/model trên là cấu hình Vilao đã chạy thử trong dự án, không phải cấu hình bắt buộc cho mọi nhà cung cấp. Khi đổi dịch vụ, dùng key, endpoint và model tương ứng. `BACKEND_URL` tùy chọn, mặc định là địa chỉ trên.
+
+| Biến | Bắt buộc | Mục đích / mặc định |
+|---|---|---|
+| `DEEPSEEK_API_KEY` | Có | Key nhà cung cấp mô hình |
+| `DEEPSEEK_BASE_URL` | Có | Endpoint tương ứng với key |
+| `DEEPSEEK_MODEL` | Có | Model ID được tài khoản cho phép sử dụng |
+| `SERPAPI_API_KEY` | Có | Key tìm kiếm Maps |
+| `BACKEND_URL` | Không | Streamlit chạy thủ công; mặc định `http://127.0.0.1:8000` |
+| `BACKEND_PORT` | Không | Cổng host khi dùng Compose; mặc định `8000` |
+| `FRONTEND_PORT` | Không | Cổng host khi dùng Compose; mặc định `8501` |
+
+Các biến cổng có thể để trống trong `.env.example`: Compose dùng mặc định sau `:-`. Giá trị truyền từ terminal được ưu tiên hơn `.env`; ví dụ `BACKEND_PORT=8001 FRONTEND_PORT=8502 docker compose up --build`. Đây là cổng trên máy host, không đổi cổng bên trong container.
+
+Biến môi trường đã tồn tại được ưu tiên hơn `.env`. Không commit `.env` hay gửi key từ frontend; backend tự đọc key. Các lệnh chạy Agent thật có thể tiêu thụ hạn mức SerpApi và phí mô hình.
+
+## Chạy ứng dụng
+
+### Terminal 1 — FastAPI
 
 ```bash
 conda activate dalat-travelmate
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-**Terminal 2 — frontend, cũng tại thư mục gốc repo:**
+Tài liệu API tương tác: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
+### Terminal 2 — Streamlit
+
+Chạy từ cùng thư mục gốc repository:
 
 ```bash
 conda activate dalat-travelmate
 python -m streamlit run ui/app.py --server.address 127.0.0.1 --server.port 8501
 ```
 
-Mở `http://127.0.0.1:8501`. API docs ở `http://127.0.0.1:8000/docs`. Nhấn Ctrl+C ở cả hai terminal để dừng.
+Mở [http://127.0.0.1:8501](http://127.0.0.1:8501), nhập mô tả và nhấn **Tìm nơi dành cho bạn**. Hai server cần được giữ chạy.
 
-</details>
+UI mặc định xem xét tối đa **10 ứng viên / nhóm**, hiển thị **Top 2 / nhóm**; có thể thay trong “Tùy chọn kết quả”. Ảnh demo dùng cấu hình 5/2. Nếu có hai nhóm nhu cầu, mỗi nhóm có tối đa hai thẻ — không phải chỉ hai thẻ cho toàn bộ request.
 
-## Đánh giá
+Streamlit gửi POST và đọc JSON từ FastAPI, không gọi Agent trực tiếp. Chỉ submit mới gọi backend; rerun thông thường giữ kết quả trong session. Thẻ xếp hai cột ở màn hình rộng và một cột ở màn hình nhỏ. UI xử lý mô tả rỗng, nhóm rỗng, lỗi kết nối và timeout; thiếu URL ảnh có ô thay thế. URL ảnh bên ngoài tải lỗi có thể hiện chữ thay thế.
 
-Bộ 10 câu có một/nhiều nhu cầu và tiêu chí khó xác minh. Chỉ chấm **hiểu nhu cầu** và **bám nguồn của từng đánh giá tiêu chí**; không chấm lời giải thích trên UI hoặc lấy điểm ranking làm nhãn chất lượng. unknown có thể là kết quả đúng khi thiếu thông tin.
+### Chạy trực tiếp từ Python
+
+```bash
+python - <<'PYTHON'
+from app.graph import run_recommendation_workflow
+from app.schemas import RecommendationRequest
+
+response = run_recommendation_workflow(
+    RecommendationRequest(
+        description="Tôi muốn quán cà phê phù hợp đọc sách và quán bánh ngọt có cảnh đẹp.",
+        location="Đà Lạt",
+    ),
+    max_candidates_per_group=3,
+    top_k=2,
+)
+print(response.model_dump_json(indent=2))
+PYTHON
+```
+
+Hai giới hạn trong hàm Python là tham số bắt buộc, số nguyên dương; 3/2 chỉ là cấu hình chạy thử. Có thể khảo sát từng phần bằng `run_search_workflow(request)` hoặc `run_assessment_workflow(request, max_candidates_per_group=...)` trong `app/graph.py`.
+
+## Chạy bằng Docker Compose
+
+Cần Docker daemon hoạt động và Docker Compose. Điền đủ bốn biến API trong `.env` như phần cấu hình; không cần Conda khi chạy bằng Docker.
+
+Tại thư mục gốc dự án:
+
+```bash
+docker compose up --build
+```
+
+Mở [Streamlit](http://127.0.0.1:8501) hoặc [tài liệu FastAPI](http://127.0.0.1:8000/docs). Compose chạy hai container từ cùng image: backend chạy Uvicorn, frontend chạy Streamlit. Frontend dùng `http://backend:8000` trong mạng Compose; `localhost` bên trong container chỉ trỏ tới chính container đó.
+
+Frontend khởi động sau khi backend trả được `/openapi.json`. Healthcheck chỉ xác nhận HTTP server sẵn sàng, không kiểm tra key hoặc dịch vụ API bên ngoài. Các cổng chỉ được công bố trên `127.0.0.1` của máy host.
+
+Nếu ứng dụng chạy thủ công đang chiếm cổng, dừng hai server đó bằng Ctrl+C hoặc dùng cổng khác:
+
+```bash
+BACKEND_PORT=8001 FRONTEND_PORT=8502 docker compose up --build
+```
+
+Khi đó mở UI tại `http://127.0.0.1:8502` và docs tại `http://127.0.0.1:8001/docs`. Địa chỉ nội bộ frontend gọi backend vẫn giữ nguyên. `BACKEND_URL` trong `.env` chỉ dùng cho cách chạy thủ công; Compose đặt riêng URL nội bộ.
+
+Dừng ứng dụng bằng Ctrl+C, sau đó dọn container/mạng của dự án:
+
+```bash
+docker compose down
+```
+
+Có thể chạy nền bằng `docker compose up --build -d`, xem trạng thái với `docker compose ps` và log với `docker compose logs --tail=50`. Sau khi sửa code, chạy lại `up --build`; cấu hình hiện không mount mã nguồn và không bật reload trong container.
+
+`.dockerignore` loại `.env` khỏi build context; Dockerfile chỉ copy dependencies và mã ứng dụng. Compose truyền các biến API cho backend lúc chạy; frontend chỉ nhận URL backend. Không chia sẻ output `docker compose config` hoặc `docker inspect` vì chúng có thể chứa giá trị secret. Có thể kiểm tra cấu hình mà không in secret bằng `docker compose config --quiet`.
+
+## API
+
+### `POST /recommendations`
+
+```bash
+curl -X POST http://127.0.0.1:8000/recommendations \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "description": "Tôi muốn quán cà phê yên tĩnh để đọc sách.",
+    "location": "Đà Lạt",
+    "max_candidates_per_group": 3,
+    "top_k": 2
+  }'
+```
+
+| Request field | Quy định |
+|---|---|
+| `description` | Bắt buộc, không được rỗng |
+| `location` | Mặc định Đà Lạt; thành phố khác bị từ chối trong MVP |
+| `max_candidates_per_group` | Bắt buộc, số nguyên dương |
+| `top_k` | Bắt buộc, số nguyên dương |
+
+Không nhận trường ngoài schema; hai giới hạn không nhận chuỗi, số thập phân hoặc boolean thay số nguyên.
+
+Response HTTP 200 có cấu trúc:
+
+```text
+RecommendationResponse
+├── location
+└── groups[]
+    ├── need
+    ├── message (tùy chọn; giải thích khi nhóm không có kết quả)
+    └── places[]
+        ├── name
+        ├── photo_url
+        ├── rating
+        ├── review_count
+        ├── address
+        ├── reason
+        └── google_maps_url
+```
+
+| HTTP | Ý nghĩa |
+|---|---|
+| 200 | Workflow hoàn thành; vẫn có thể có nhóm rỗng với `message` |
+| 422 | Request không hợp lệ hoặc thành phố chưa hỗ trợ |
+| 502 | Lỗi dịch vụ bên ngoài khiến workflow không chạy được |
+| 503 | Backend thiếu cấu hình API |
+
+Lỗi riêng từng ứng viên được ghi nhận và không dừng các ứng viên khác. Endpoint đồng bộ được FastAPI chạy trong threadpool; client chờ đến khi Agent hoàn thành. Mỗi POST hợp lệ chạy workflow lại.
+
+## Kiểm tra kết quả
+
+### Test runner offline
+
+Từ thư mục gốc repo, trong môi trường Python đã cài dependencies:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Hiện có **13 test cho runner**, dùng `unittest` có sẵn trong Python, không thêm framework. Test dùng graph giả và một graph LangGraph thực với dịch vụ đã mock; kết nối socket bị chặn. Các trường hợp gồm:
+
+- Đọc đúng case; không gửi kỳ vọng/ghi chú vào Agent.
+- Một lần stream mỗi case, không gọi lại graph để xuất báo cáo.
+- Nối đúng nguồn và output ngay cả khi tên quán/nhóm trùng nhau.
+- Lưu riêng từng lần chạy; giữ dữ liệu trước lỗi, tiếp tục câu sau; xử lý Ctrl+C.
+- Ghi kết quả rỗng, lỗi ứng viên, chưa đánh giá và che secret.
+- Giữ hợp đồng response của workflow phục vụ FastAPI.
+
+Đây là test **runner và tính toàn vẹn dữ liệu**, không chứng minh chất lượng LLM. Bộ unit test ranking/assessment validation riêng chưa được bổ sung.
+
+### Bộ đánh giá thủ công 10 câu
+
+Bộ [E01–E10](evaluation/cases.json) gồm ăn vặt, tiệm bánh, bánh căn, quán nướng, ngắm cảnh, vườn hoa, âm nhạc và cà phê; có một hoặc nhiều nhóm nhu cầu. Tên nhóm/tiêu chí được chấm theo ý nghĩa, không ép nguyên văn hoặc một quán làm đáp án.
+
+Chỉ chấm **hai phần**:
+
+| Phần | Đơn vị chấm | Cách đánh giá |
+|---|---|---|
+| Hiểu nhu cầu | Từng câu | Giữ ý chính, đúng nhóm, phân biệt wants/avoids |
+| Bám nguồn | Từng tiêu chí của từng địa điểm | Status, ID nguồn và explanation có hợp lý với Details/Reviews đã cung cấp không |
+
+Nhãn: Đạt / Chưa đạt / Chưa xác định. `unknown` có thể là kết quả đúng khi thiếu bằng chứng. Không dùng Google Rating hay điểm ranking làm nhãn chất lượng; không chấm câu lý do trên UI vào benchmark.
+
+Chạy một câu trước:
+
+```bash
+python -m evaluation.run --case E02 \
+  --max-candidates-per-group 3 --top-k 2
+```
+
+Chạy cả bộ:
+
+```bash
+python -m evaluation.run --all \
+  --max-candidates-per-group 3 --top-k 2
+```
+
+**Các lệnh evaluation gọi API thật và có thể tính phí/hạn mức.** Runner gọi graph trực tiếp, không cần FastAPI/Streamlit hoặc container đang chạy. Hai giới hạn áp dụng mỗi nhóm và bắt buộc là số nguyên dương; 3/2 chỉ là cấu hình ví dụ.
+
+Mỗi lần chạy lưu thư mục riêng trong `evaluation/runs/` gồm manifest, JSON từng câu và `report.md`. Báo cáo giữ nhu cầu, query, ứng viên, evidence, assessment và output để đối chiếu; không tự chấm, không gọi thêm API để dựng báo cáo. Nhận xét người chấm có thể viết riêng trong `manual_review.md`. Xem [hướng dẫn đánh giá](evaluation/README.md).
 
 ### 10 câu đã đánh giá và kết quả
 
-Lần chạy ngày **18/10/2026**, model `chib/deepseek-v4.1-flash`, tối đa **3 ứng viên/nhóm**, **Top 2/nhóm**. Người dùng đã chốt cả 10 câu giữ được ý chính, đúng nhóm và phân biệt wants/avoids. Cột bám nguồn ghi số **Đạt / Chưa đạt** theo từng tiêu chí của từng địa điểm, không phải số quán.
+Đánh giá trên một lần chạy ngày **18/10/2026**, model `chib/deepseek-v4.1-flash`, tối đa **3 ứng viên mỗi nhóm**, chọn **Top 2 mỗi nhóm**. Người dùng và trợ lý đọc kết quả đã lưu, đối chiếu theo hai tiêu chí trên; không gọi một mô hình khác để tự chấm.
 
-| Mã | Câu người dùng nhập | Hiểu nhu cầu | Bám nguồn — sơ bộ |
+**Hiểu nhu cầu:** người dùng đã chốt cả 10 câu Đạt về giữ ý chính, đúng nhóm và phân biệt wants/avoids. Chấp nhận cách diễn đạt tương đương; lưu ý về lặp tiêu chí hoặc liên hệ thời gian được ghi riêng.
+
+**Bám nguồn:** cột dưới ghi số đánh giá tiêu chí Đạt / Chưa đạt trong từng câu, không phải số quán. Đây là kết quả rà soát **chưa được người dùng duyệt toàn bộ**: 7 mục từng mơ hồ đã được chốt (6 Đạt, 1 Chưa đạt); 61 Đạt và 4 Chưa đạt còn lại là nhận xét trợ lý chờ duyệt.
+
+| Mã | Câu người dùng nhập | Hiểu nhu cầu — đã duyệt | Bám nguồn — Đạt / Chưa đạt (sơ bộ) |
 |---|---|---|---:|
 | E01 | Tôi muốn tìm chỗ ăn vặt. | Đạt | 1 / 2 |
 | E02 | Tôi muốn tìm tiệm bánh ngọt có chỗ ngồi lại và phục vụ trà. | Đạt | 6 / 0 |
@@ -148,30 +443,56 @@ Lần chạy ngày **18/10/2026**, model `chib/deepseek-v4.1-flash`, tối đa *
 | E09 | Tôi muốn tìm chỗ ăn vặt giá hợp lý và tiệm bánh có chỗ ngồi ngoài trời. | Đạt | 12 / 0 |
 | E10 | Tôi muốn quán ăn có món chay, quán cà phê ven hồ và một nơi ngắm cảnh đồi núi. | Đạt | 8 / 1 |
 
-**Tổng:** hiểu nhu cầu **10 Đạt / 0 Chưa đạt**; bám nguồn sơ bộ **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên 72 đánh giá tiêu chí của 36 lượt địa điểm. Một ứng viên E07 lỗi assessment được ghi riêng, không chấm như lỗi phân tích.
+**Tổng:** hiểu nhu cầu **10 Đạt / 0 Chưa đạt**; bám nguồn sơ bộ **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên **72 đánh giá tiêu chí của 36 lượt địa điểm có assessment**. Một lượt ứng viên E07 lỗi assessment nên không có kết luận để chấm và không nằm trong 72 mục; không tự chấm lỗi dịch vụ là phân tích sai.
 
-**Tình trạng duyệt:** người dùng đã duyệt 7 mục bám nguồn từng mơ hồ (6 Đạt, 1 Chưa đạt). 61 Đạt và 4 Chưa đạt còn lại là nhận xét trợ lý, chưa duyệt toàn bộ. Các vấn đề ghi nhận gồm gán nguồn phản bác sai và trả unknown quá bảo thủ. Đây là bộ nhỏ có trợ lý hỗ trợ, **không phải accuracy toàn hệ thống**.
+Các mục bám nguồn đang ghi nhận Chưa đạt:
 
-[Bộ câu hỏi](evaluation/cases.json) · [Cách chạy đánh giá, test offline và hướng dẫn chấm](evaluation/README.md). Runner không tự chấm; dữ liệu nguồn/nhận xét được giữ local trong `evaluation/runs/` và không được push. Hiện có 13 test runner offline; chưa có bộ unit test ranking/assessment riêng.
+- **E01 — 2 mục:** dùng nhãn loại hình Quán cà phê/Nhà hàng làm bằng chứng phản bác ăn vặt, dù các đặc điểm có thể cùng đúng. Nhận xét trợ lý, chờ duyệt.
+- **E07 — 1 mục:** trả `unknown` cho có chỗ ngồi, trong khi ngữ cảnh ăn trưa tại nhà hàng được người dùng chấp nhận là đủ suy ra chỗ ngồi. Người dùng đã chốt.
+- **E08 — 1 mục:** review nói quán vắng chiều mưa bị đưa vào nguồn phản bác yên tĩnh. Nhận xét trợ lý, chờ duyệt.
+- **E10 — 1 mục:** nguồn không nói về cảnh đồi núi bị dùng làm bằng chứng phản bác tiêu chí đó. Nhận xét trợ lý, chờ duyệt.
 
-## Cấu trúc chính
+`unknown` không tự là lỗi: nếu nguồn thiếu thông tin và Agent không khẳng định quá mức, đánh giá đó vẫn có thể Đạt. Nhãn bám nguồn còn xét explanation và các ID viện dẫn, không chỉ status. Tổng 72 mục là tiêu chí Agent thực tế tạo (có thể lặp/khác cách tách), không phải 72 nhãn chuẩn cố định.
 
-```text
-app/          Workflow, schemas, clients, ranking và FastAPI
-ui/           Giao diện Streamlit
-.streamlit/   Theme
-evaluation/  Bộ câu hỏi, runner và hướng dẫn đánh giá
-tests/       Test runner offline
-docs/images/ Bốn ảnh demo
-Dockerfile
-compose.yaml
-.env.example
-requirements.txt
+**Giới hạn:** đây là đánh giá thủ công có trợ lý hỗ trợ trên bộ nhỏ, không phải accuracy toàn hệ thống, không có người chấm độc lập/baseline. Không cộng hai lớp thành điểm tổng hoặc suy 10 câu Đạt thành mọi đề xuất đều phù hợp. Kết quả nguồn và bản chấm chi tiết được giữ local trong `evaluation/runs/`, không đi kèm repo công khai; người đọc có thể chạy lại bằng [bộ câu hỏi](evaluation/cases.json) và [hướng dẫn](evaluation/README.md), nhưng Search/review có thể thay đổi.
+
+FastAPI/Streamlit và Docker Compose cũng đã được chạy thử thủ công. Ảnh/link và chất lượng địa điểm ngoài đời chưa được xác minh chỉ từ bộ đánh giá này.
+
+## Xử lý lỗi thường gặp
+
+| Hiện tượng | Kiểm tra / cách xử lý |
+|---|---|
+| Compose báo thiếu biến API | Điền đủ bốn biến bắt buộc trong `.env`, tại thư mục gốc repo |
+| Không kết nối Docker daemon / permission denied | Kiểm tra Docker đang hoạt động và tài khoản có quyền truy cập daemon |
+| Port is already allocated / address already in use | Dừng server cũ hoặc đổi `BACKEND_PORT` và `FRONTEND_PORT` |
+| Không tìm thấy image local | Chạy `docker compose up --build` để tạo image trước |
+| UI báo không kết nối backend | Chạy cả backend và frontend; kiểm tra `docker compose ps` và log |
+| API trả 502 / lỗi lấy dữ liệu | Kiểm tra key, endpoint/model tương ứng, Internet và hạn mức dịch vụ |
+| Không có kết quả hoặc nhiều tiêu chí chưa xác minh | Thử mô tả khác; kiểm tra query/bằng chứng. Không coi thiếu review là không phù hợp |
+| UI timeout | Giảm số ứng viên/nhóm; backend có thể vẫn xử lý request cũ |
+
+Lệnh kiểm tra cấu hình không in giá trị secret:
+
+```bash
+docker compose config --quiet
+docker compose ps
+docker compose logs --tail=50
 ```
 
-## Giới hạn
+## Đóng góp và chia sẻ repo
 
-- Chỉ hỗ trợ Đà Lạt; không làm lịch trình, khách sạn, đặt phòng hoặc tối ưu đường đi.
-- Reviews mới lấy trang đầu; nhiều tiêu chí có thể chưa đủ bằng chứng. ID nguồn hợp lệ chưa bảo đảm LLM kết luận đúng nghĩa.
-- Top-K chỉ trong tập ứng viên đã đánh giá. Query và tâm bản đồ chưa bảo đảm mọi địa điểm đúng khu vực hoặc đáp ứng sở thích.
-- Ảnh và dữ liệu có thể thiếu/thay đổi. Search mới chuẩn hóa `local_results`; ứng dụng hiện phục vụ local, chưa có xác thực hay giới hạn tần suất cho triển khai public.
+Thay đổi từng component nhỏ, chạy kiểm tra thủ công phù hợp rồi cập nhật tài liệu. Không thêm công nghệ ngoài phạm vi MVP chỉ để tăng số lượng công cụ. Trước khi push, kiểm tra `git status` và nội dung thay đổi; chỉ commit `.env.example`, không commit `.env` hoặc phản hồi chứa thông tin nhạy cảm.
+
+Các dependency hiện được giới hạn theo khoảng phiên bản trong `requirements.txt`, chưa có lockfile; build vào thời điểm khác có thể nhận phiên bản thư viện khác. Image chưa publish lên registry và chưa xác minh trên mọi kiến trúc máy. README mô tả cách build từ source.
+
+## Giới hạn và bước tiếp theo
+
+- Search mới chuẩn hóa `local_results`; chưa xử lý kết quả riêng trong `place_results`.
+- Tâm bản đồ và query chưa bảo đảm mọi kết quả đúng khu vực hoặc đáp ứng sở thích. Chưa có bộ lọc địa lý độc lập.
+- Reviews chỉ lấy trang đầu; số review phân tích khác tổng số đánh giá Google. Mẫu review không đại diện toàn bộ trải nghiệm.
+- Bằng chứng chưa sử dụng `price`, `review.details` hoặc `unsupported_extensions`. Nhiều tiêu chí có thể là `unknown`.
+- Kết luận LLM và ranking vẫn cần kiểm tra thực tế. Kiểm tra ID nguồn không xác minh độ đúng về mặt ngữ nghĩa.
+- UI có thời gian chờ đọc response 300 giây; timeout ở frontend không tự hủy workflow backend.
+- Chưa có xác thực hoặc giới hạn tần suất cho triển khai public. Hiện hướng dẫn chạy local.
+
+**Bước tiếp theo:** kiểm tra chất lượng đề xuất bằng các mô tả thực tế và ghi lại các trường hợp chưa phù hợp.
