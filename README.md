@@ -428,9 +428,9 @@ Mỗi lần chạy lưu thư mục riêng trong `evaluation/runs/` gồm manifes
 
 **Hiểu nhu cầu:** người dùng đã chốt cả 10 câu Đạt về giữ ý chính, đúng nhóm và phân biệt wants/avoids. Chấp nhận cách diễn đạt tương đương; lưu ý về lặp tiêu chí hoặc liên hệ thời gian được ghi riêng.
 
-**Bám nguồn:** cột dưới ghi số đánh giá tiêu chí Đạt / Chưa đạt trong từng câu, không phải số quán. Đây là kết quả rà soát **chưa được người dùng duyệt toàn bộ**: 7 mục từng mơ hồ đã được chốt (6 Đạt, 1 Chưa đạt); 61 Đạt và 4 Chưa đạt còn lại là nhận xét trợ lý chờ duyệt.
+**Bám nguồn:** cột dưới ghi số đánh giá tiêu chí Đạt / Chưa đạt trong từng câu, không phải số quán. Đây là kết quả đánh giá thủ công có trợ lý hỗ trợ, **đã được người dùng xác nhận và chốt** trên lần chạy này: 67 Đạt, 5 Chưa đạt, không còn mục Chưa xác định. Không phải đánh giá độc lập của nhiều người chấm.
 
-| Mã | Câu người dùng nhập | Hiểu nhu cầu — đã duyệt | Bám nguồn — Đạt / Chưa đạt (sơ bộ) |
+| Mã | Câu người dùng nhập | Hiểu nhu cầu — đã duyệt | Bám nguồn — Đạt / Chưa đạt (đã chốt) |
 |---|---|---|---:|
 | E01 | Tôi muốn tìm chỗ ăn vặt. | Đạt | 1 / 2 |
 | E02 | Tôi muốn tìm tiệm bánh ngọt có chỗ ngồi lại và phục vụ trà. | Đạt | 6 / 0 |
@@ -443,14 +443,14 @@ Mỗi lần chạy lưu thư mục riêng trong `evaluation/runs/` gồm manifes
 | E09 | Tôi muốn tìm chỗ ăn vặt giá hợp lý và tiệm bánh có chỗ ngồi ngoài trời. | Đạt | 12 / 0 |
 | E10 | Tôi muốn quán ăn có món chay, quán cà phê ven hồ và một nơi ngắm cảnh đồi núi. | Đạt | 8 / 1 |
 
-**Tổng:** hiểu nhu cầu **10 Đạt / 0 Chưa đạt**; bám nguồn sơ bộ **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên **72 đánh giá tiêu chí của 36 lượt địa điểm có assessment**. Một lượt ứng viên E07 lỗi assessment nên không có kết luận để chấm và không nằm trong 72 mục; không tự chấm lỗi dịch vụ là phân tích sai.
+**Tổng:** hiểu nhu cầu **10 Đạt / 0 Chưa đạt**; bám nguồn **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên **72 đánh giá tiêu chí của 36 lượt địa điểm có assessment**. Một lượt ứng viên E07 lỗi assessment nên không có kết luận để chấm và không nằm trong 72 mục; không tự chấm lỗi dịch vụ là phân tích sai.
 
 Các mục bám nguồn đang ghi nhận Chưa đạt:
 
-- **E01 — 2 mục:** dùng nhãn loại hình Quán cà phê/Nhà hàng làm bằng chứng phản bác ăn vặt, dù các đặc điểm có thể cùng đúng. Nhận xét trợ lý, chờ duyệt.
+- **E01 — 2 mục:** dùng nhãn loại hình Quán cà phê/Nhà hàng làm bằng chứng phản bác ăn vặt, dù các đặc điểm có thể cùng đúng. Người dùng đã xác nhận Chưa đạt.
 - **E07 — 1 mục:** trả `unknown` cho có chỗ ngồi, trong khi ngữ cảnh ăn trưa tại nhà hàng được người dùng chấp nhận là đủ suy ra chỗ ngồi. Người dùng đã chốt.
-- **E08 — 1 mục:** review nói quán vắng chiều mưa bị đưa vào nguồn phản bác yên tĩnh. Nhận xét trợ lý, chờ duyệt.
-- **E10 — 1 mục:** nguồn không nói về cảnh đồi núi bị dùng làm bằng chứng phản bác tiêu chí đó. Nhận xét trợ lý, chờ duyệt.
+- **E08 — 1 mục:** review nói quán vắng chiều mưa bị đưa vào nguồn phản bác yên tĩnh. Người dùng đã xác nhận Chưa đạt.
+- **E10 — 1 mục:** nguồn không nói về cảnh đồi núi bị dùng làm bằng chứng phản bác tiêu chí đó. Người dùng đã xác nhận Chưa đạt.
 
 `unknown` không tự là lỗi: nếu nguồn thiếu thông tin và Agent không khẳng định quá mức, đánh giá đó vẫn có thể Đạt. Nhãn bám nguồn còn xét explanation và các ID viện dẫn, không chỉ status. Tổng 72 mục là tiêu chí Agent thực tế tạo (có thể lặp/khác cách tách), không phải 72 nhãn chuẩn cố định.
 

@@ -23,6 +23,8 @@ So description với các nhóm và tiêu chí thực tế: giữ ý chính, đ�
 
 Theo tiêu chuẩn đã thống nhất, cả 10 câu của lần chạy đầy đủ được người dùng chốt Đạt về hiểu nhu cầu. Lặp biểu diễn hoặc nguy cơ mất quan hệ thời gian được ghi chú kỹ thuật riêng, không tự đổi nhãn cả câu thành hiểu sai.
 
+Lần chạy ngày 18/10/2026 (3 ứng viên/nhóm, Top 2) có kết quả bám nguồn đã được người dùng chốt: **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên 72 đánh giá tiêu chí của 36 lượt địa điểm. Đây là đánh giá thủ công có trợ lý hỗ trợ, không phải accuracy toàn hệ thống. Bản chấm chi tiết nằm local trong `runs/`.
+
 ### Bám nguồn — chấm từng địa điểm, từng tiêu chí
 
 Đọc evidence, ID nguồn hỗ trợ/phản bác, status và explanation cùng nhau:
