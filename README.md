@@ -422,13 +422,41 @@ python -m evaluation.run --all \
 
 Mỗi lần chạy lưu thư mục riêng trong `evaluation/runs/` gồm manifest, JSON từng câu và `report.md`. Báo cáo giữ nhu cầu, query, ứng viên, evidence, assessment và output để đối chiếu; không tự chấm, không gọi thêm API để dựng báo cáo. Nhận xét người chấm có thể viết riêng trong `manual_review.md`. Xem [hướng dẫn đánh giá](evaluation/README.md).
 
-### Trạng thái đánh giá hiện tại
+### 10 câu đã đánh giá và kết quả
 
-Đã chạy một bộ 10 câu với cấu hình 3 ứng viên/nhóm, Top 2, tạo 13 nhóm và 36 lượt địa điểm có assessment (72 đánh giá tiêu chí); một lượt ứng viên E07 lỗi assessment. Người dùng đã chốt 10 câu giữ được nhu cầu chính theo tiêu chuẩn của bộ này. Phần bám nguồn đã được rà soát có trợ lý hỗ trợ nhưng chưa duyệt toàn bộ, nên chưa công bố tỷ lệ chất lượng đã xác nhận.
+Đánh giá trên một lần chạy ngày **18/10/2026**, model `chib/deepseek-v4.1-flash`, tối đa **3 ứng viên mỗi nhóm**, chọn **Top 2 mỗi nhóm**. Người dùng và trợ lý đọc kết quả đã lưu, đối chiếu theo hai tiêu chí trên; không gọi một mô hình khác để tự chấm.
 
-Các kết quả nguồn và nhận xét nằm local, không đi kèm repo công khai. Chưa có baseline, người chấm độc lập hay kết quả đủ để suy ra accuracy toàn hệ thống. Hạn chế quan sát được gồm gán nhầm bằng chứng phản bác và suy luận quá bảo thủ; cần tiếp tục kiểm tra, không coi luồng chạy thành công là đề xuất đã tốt.
+**Hiểu nhu cầu:** người dùng đã chốt cả 10 câu Đạt về giữ ý chính, đúng nhóm và phân biệt wants/avoids. Chấp nhận cách diễn đạt tương đương; lưu ý về lặp tiêu chí hoặc liên hệ thời gian được ghi riêng.
 
-Ngoài bộ đánh giá, FastAPI/Streamlit và Docker Compose đã được chạy thử thủ công. Ảnh, link Maps và chất lượng đề xuất thực tế vẫn cần kiểm tra theo từng trường hợp.
+**Bám nguồn:** cột dưới ghi số đánh giá tiêu chí Đạt / Chưa đạt trong từng câu, không phải số quán. Đây là kết quả rà soát **chưa được người dùng duyệt toàn bộ**: 7 mục từng mơ hồ đã được chốt (6 Đạt, 1 Chưa đạt); 61 Đạt và 4 Chưa đạt còn lại là nhận xét trợ lý chờ duyệt.
+
+| Mã | Câu người dùng nhập | Hiểu nhu cầu — đã duyệt | Bám nguồn — Đạt / Chưa đạt (sơ bộ) |
+|---|---|---|---:|
+| E01 | Tôi muốn tìm chỗ ăn vặt. | Đạt | 1 / 2 |
+| E02 | Tôi muốn tìm tiệm bánh ngọt có chỗ ngồi lại và phục vụ trà. | Đạt | 6 / 0 |
+| E03 | Tôi muốn ăn bánh căn vào buổi sáng, tránh chỗ ngồi sát đường nhiều khói xe. | Đạt | 12 / 0 |
+| E04 | Tôi muốn tìm quán nướng có chỗ ngồi ngoài trời và nhìn ra đồi núi. | Đạt | 6 / 0 |
+| E05 | Tôi muốn tìm nơi ngắm hoàng hôn, không phải đi bộ lên dốc nhiều. | Đạt | 3 / 0 |
+| E06 | Tôi muốn tham quan vườn hoa có lối đi dễ di chuyển cho người lớn tuổi. | Đạt | 6 / 0 |
+| E07 | Tôi muốn tìm nơi nghe nhạc acoustic vào buổi tối, có chỗ ngồi. | Đạt | 5 / 1 |
+| E08 | Tôi muốn quán cà phê có nhiều cây xanh, yên tĩnh để đọc sách. | Đạt | 8 / 1 |
+| E09 | Tôi muốn tìm chỗ ăn vặt giá hợp lý và tiệm bánh có chỗ ngồi ngoài trời. | Đạt | 12 / 0 |
+| E10 | Tôi muốn quán ăn có món chay, quán cà phê ven hồ và một nơi ngắm cảnh đồi núi. | Đạt | 8 / 1 |
+
+**Tổng:** hiểu nhu cầu **10 Đạt / 0 Chưa đạt**; bám nguồn sơ bộ **67 Đạt / 5 Chưa đạt / 0 Chưa xác định**, trên **72 đánh giá tiêu chí của 36 lượt địa điểm có assessment**. Một lượt ứng viên E07 lỗi assessment nên không có kết luận để chấm và không nằm trong 72 mục; không tự chấm lỗi dịch vụ là phân tích sai.
+
+Các mục bám nguồn đang ghi nhận Chưa đạt:
+
+- **E01 — 2 mục:** dùng nhãn loại hình Quán cà phê/Nhà hàng làm bằng chứng phản bác ăn vặt, dù các đặc điểm có thể cùng đúng. Nhận xét trợ lý, chờ duyệt.
+- **E07 — 1 mục:** trả `unknown` cho có chỗ ngồi, trong khi ngữ cảnh ăn trưa tại nhà hàng được người dùng chấp nhận là đủ suy ra chỗ ngồi. Người dùng đã chốt.
+- **E08 — 1 mục:** review nói quán vắng chiều mưa bị đưa vào nguồn phản bác yên tĩnh. Nhận xét trợ lý, chờ duyệt.
+- **E10 — 1 mục:** nguồn không nói về cảnh đồi núi bị dùng làm bằng chứng phản bác tiêu chí đó. Nhận xét trợ lý, chờ duyệt.
+
+`unknown` không tự là lỗi: nếu nguồn thiếu thông tin và Agent không khẳng định quá mức, đánh giá đó vẫn có thể Đạt. Nhãn bám nguồn còn xét explanation và các ID viện dẫn, không chỉ status. Tổng 72 mục là tiêu chí Agent thực tế tạo (có thể lặp/khác cách tách), không phải 72 nhãn chuẩn cố định.
+
+**Giới hạn:** đây là đánh giá thủ công có trợ lý hỗ trợ trên bộ nhỏ, không phải accuracy toàn hệ thống, không có người chấm độc lập/baseline. Không cộng hai lớp thành điểm tổng hoặc suy 10 câu Đạt thành mọi đề xuất đều phù hợp. Kết quả nguồn và bản chấm chi tiết được giữ local trong `evaluation/runs/`, không đi kèm repo công khai; người đọc có thể chạy lại bằng [bộ câu hỏi](evaluation/cases.json) và [hướng dẫn](evaluation/README.md), nhưng Search/review có thể thay đổi.
+
+FastAPI/Streamlit và Docker Compose cũng đã được chạy thử thủ công. Ảnh/link và chất lượng địa điểm ngoài đời chưa được xác minh chỉ từ bộ đánh giá này.
 
 ## Xử lý lỗi thường gặp
 
